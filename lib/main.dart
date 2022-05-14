@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,7 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Bus_aggressive_driving',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -24,7 +27,7 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Bus_aggressive_driving'),
     );
   }
 }
@@ -48,7 +51,10 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  List<double> accelator_x = [];
+  List<double> accelator_y = [];
+  List<double> accelator_z = [];
+  List<DateTime> time = [];
 
   void _incrementCounter() {
     setState(() {
@@ -57,7 +63,14 @@ class _MyHomePageState extends State<MyHomePage> {
       // so that the display can reflect the updated values. If we changed
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
-      _counter++;
+      accelerometerEvents.listen((AccelerometerEvent event) { // 가속도계 센서에서 데이터 받아오기
+        if (sqrt(event.x * event.x + event.y * event.y + event.z + event.z) > 20){ // 가속도가 10 이상인 경우 입력 받기
+          accelator_x.add(event.x); // 가속도 x
+          accelator_x.add(event.y); // 가속도 y
+          accelator_x.add(event.z); // 가속도 z
+          time.add(new DateTime.now()); // 난폭 운전이 감지된 시간 저장
+        }
+      });
     });
   }
 
@@ -99,7 +112,7 @@ class _MyHomePageState extends State<MyHomePage> {
               'You have pushed the button this many times:',
             ),
             Text(
-              '$_counter',
+              '${time.length}',
               style: Theme.of(context).textTheme.headline4,
             ),
           ],
