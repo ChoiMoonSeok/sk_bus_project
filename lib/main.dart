@@ -1,128 +1,132 @@
+import 'dart:developer';
 import 'dart:math';
-
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+void main() =>runApp(d_or_p_1st());
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class d_or_p_1st extends StatelessWidget{ // 기본 화면 구성 : 밑바탕
 
-  // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context){
     return MaterialApp(
-      title: 'Bus_aggressive_driving',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(title: 'Bus_aggressive_driving'),
+      title: 'aggressive_drive_avoider',
+      home: choose_d_or_p(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class choose_d_or_p extends StatelessWidget{
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  Widget build(BuildContext context) {
+
+    return Scaffold(
+      appBar: AppBar( // 제목
+        title: Text("버스 기사 혹은 승객"),
+      ),
+      body: Row(
+
+        mainAxisAlignment: MainAxisAlignment.center, // Y축 중앙으로 정렬
+        crossAxisAlignment: CrossAxisAlignment.center, // X축 중앙으로 정렬
+        mainAxisSize: MainAxisSize.max,
+        children: <Widget> [ // body의 row에 Widget을 넣어줌
+
+          FloatingActionButton( // 버스 기사용 버튼
+                onPressed: () { // 버튼을 눌렀을 때
+                  Navigator.push( // 다른 위젯으로 이동하는 함수
+                    context,
+                    MaterialPageRoute(builder: (context)=>acc())
+                  );
+                },
+            child: Icon(Icons.directions_bus),
+          ),
+
+          Container( // 사이 공간 띄우는 용도의 빈 컨테이너
+            padding: EdgeInsets.all(5),
+            margin: EdgeInsets.all(30),
+          ),
+
+          FloatingActionButton( // 일반 승객용 버튼
+              onPressed: (){
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context)=>aggressive())
+                );
+              },
+            child: Icon(Icons.person),
+          )
+        ],
+
+      ),
+
+    );
+
+  }
+
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class acc extends StatefulWidget {
+
+  @override
+  accState createState() => accState();
+}
+
+class accState extends State<acc>{
   List<double> accelator_x = [];
   List<double> accelator_y = [];
   List<double> accelator_z = [];
   List<DateTime> time = [];
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      accelerometerEvents.listen((AccelerometerEvent event) { // 가속도계 센서에서 데이터 받아오기
-        if (sqrt(event.x * event.x + event.y * event.y + event.z + event.z) > 20){ // 가속도가 10 이상인 경우 입력 받기
-          accelator_x.add(event.x); // 가속도 x
-          accelator_x.add(event.y); // 가속도 y
-          accelator_x.add(event.z); // 가속도 z
-          time.add(new DateTime.now()); // 난폭 운전이 감지된 시간 저장
-        }
-      });
+  @override
+  void setState(VoidCallback fn) {
+    accelerometerEvents.listen((AccelerometerEvent event) {
+      if (sqrt(event.x * event.x + event.y * event.y + event.z + event.z) > 20){
+        accelator_x.add(event.x); // 가속도 x
+        accelator_x.add(event.y); // 가속도 y
+        accelator_x.add(event.z); // 가속도 z
+        time.add(new DateTime.now()); // 난폭 운전이 감지된 시간 저장
+        setState(() { });
+      }
     });
   }
+  @override
 
+  Widget build(BuildContext context) {
+    accelerometerEvents.listen((AccelerometerEvent event) {
+      if (sqrt(event.x * event.x + event.y * event.y + event.z + event.z) >
+          20) {
+        accelator_x.add(event.x); // 가속도 x
+        accelator_x.add(event.y); // 가속도 y
+        accelator_x.add(event.z); // 가속도 z
+        time.add(new DateTime.now());
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context)=>aggressive())
+        );
+      }
+    });
+    return Container(
+      color: Colors.blue,
+    );
+  }
+}
+
+class aggressive extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '${time.length}',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+    accelerometerEvents.listen((AccelerometerEvent event) {
+      if (sqrt(event.x * event.x + event.y * event.y + event.z + event.z) <=
+          20) {
+        Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context)=>acc())
+        );
+      }
+    });
+    return Container(
+      color: Colors.red,
     );
   }
 }
