@@ -1,18 +1,50 @@
 import 'dart:developer';
 import 'dart:math';
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
-import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
 
-// https://velog.io/@leeeeeoy/Flutter-Dio-간단-정리
+Future<Acc> createAcc(double acc_x, double acc_y) async { // 가속계 데이터를 서버에 전송하는 함수
+  final response = await http.post( // 전송할 json 형태 가져오기
+    Uri.parse('http://10.0.2.2:5000/acc_data'), // 전송할 서버 ip
+    headers: <String, String>{ // header
+      'Content-Type': 'application/json; charset=UTF-8', // 안 넣으면 오류 발생
+    },
+    body: jsonEncode(<String, dynamic>{ // jsonEncode로 json 형태로 데이터를 변환
+      'acc_x': acc_x,
+      'acc_y': acc_y
+    }),
+  );
+
+  if (response.statusCode == 201) {
+    // If the server did return a 201 CREATED response,
+    // then parse the JSON.
+    return Acc.fromJson(jsonDecode(response.body));
+  } else {
+    // If the server did not return a 201 CREATED response,
+    // then throw an exception.
+    throw Exception('Failed to create album.');
+  }
+}
+
+class Acc {
+  final double acc_x;
+  final double acc_y;
+
+  const Acc({required this.acc_x, required this.acc_y});
+
+  factory Acc.fromJson(Map<String, dynamic> json) {
+    return Acc(
+      acc_x: json['acc_x'],
+      acc_y: json['acc_y']
+    );
+  }
+}
 
 
 void main() =>runApp(d_or_p_1st());
-
-List<double> accelator_x = [];
-List<double> accelator_y = [];
-List<DateTime> time = [];
 
 class d_or_p_1st extends StatelessWidget{ // 기본 화면 구성 : 밑바탕
 
@@ -84,31 +116,17 @@ class acc extends StatefulWidget {
 class accState extends State<acc>{
 
   @override
-  void setState(VoidCallback fn) {
-    accelerometerEvents.listen((AccelerometerEvent event) {
-      if (sqrt(event.x * event.x + event.y * event.y + event.z + event.z) > 20){
-        accelator_x.add(event.x); // 가속도 x
-        accelator_x.add(event.y); // 가속도 y
-        accelator_x.add(event.z); // 가속도 z
-        time.add(new DateTime.now()); // 난폭 운전이 감지된 시간 저장
-        setState(() { });
-      }
-    });
-  }
-  @override
 
   Widget build(BuildContext context) {
     accelerometerEvents.listen((AccelerometerEvent event) {
-      if (sqrt(event.x * event.x + event.y * event.y + event.z * event.z) > 20) {
-        accelator_x.add(event.x); // 가속도 x
-        accelator_y.add(event.y); // 가속도 y
-        time.add(new DateTime.now());
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context)=>aggressive())
-        );
-      }
-    });
+        if (sqrt(event.x * event.x + event.y * event.y) > 10){
+          createAcc(event.x, event.y);
+          Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context)=>aggressive())
+          );
+        }
+      });
     return Container(
       color: Colors.blue,
     );
@@ -119,8 +137,8 @@ class aggressive extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     accelerometerEvents.listen((AccelerometerEvent e) {
-      if (sqrt(e.x * e.x + e.y * e.y + e.z * e.z) <
-          20) {
+      if (sqrt(e.x * e.x + e.z * e.z) <
+          10) {
         Navigator.push(
             context,
             MaterialPageRoute(builder: (context)=>acc())
