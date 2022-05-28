@@ -3,8 +3,16 @@ import 'dart:math';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'package:dio/dio.dart';
+
+// https://velog.io/@leeeeeoy/Flutter-Dio-간단-정리
+
 
 void main() =>runApp(d_or_p_1st());
+
+List<double> accelator_x = [];
+List<double> accelator_y = [];
+List<DateTime> time = [];
 
 class d_or_p_1st extends StatelessWidget{ // 기본 화면 구성 : 밑바탕
 
@@ -74,10 +82,6 @@ class acc extends StatefulWidget {
 }
 
 class accState extends State<acc>{
-  List<double> accelator_x = [];
-  List<double> accelator_y = [];
-  List<double> accelator_z = [];
-  List<DateTime> time = [];
 
   @override
   void setState(VoidCallback fn) {
@@ -95,11 +99,9 @@ class accState extends State<acc>{
 
   Widget build(BuildContext context) {
     accelerometerEvents.listen((AccelerometerEvent event) {
-      if (sqrt(event.x * event.x + event.y * event.y + event.z + event.z) >
-          20) {
+      if (sqrt(event.x * event.x + event.y * event.y + event.z * event.z) > 20) {
         accelator_x.add(event.x); // 가속도 x
-        accelator_x.add(event.y); // 가속도 y
-        accelator_x.add(event.z); // 가속도 z
+        accelator_y.add(event.y); // 가속도 y
         time.add(new DateTime.now());
         Navigator.push(
           context,
@@ -116,8 +118,8 @@ class accState extends State<acc>{
 class aggressive extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    accelerometerEvents.listen((AccelerometerEvent event) {
-      if (sqrt(event.x * event.x + event.y * event.y + event.z + event.z) <=
+    accelerometerEvents.listen((AccelerometerEvent e) {
+      if (sqrt(e.x * e.x + e.y * e.y + e.z * e.z) <
           20) {
         Navigator.push(
             context,
@@ -125,6 +127,7 @@ class aggressive extends StatelessWidget {
         );
       }
     });
+
     return Container(
       color: Colors.red,
     );
