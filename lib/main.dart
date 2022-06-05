@@ -29,7 +29,17 @@ Future<Acc> createAcc(double acc_x, double acc_y) async { // 가속계 데이터
   }
 }
 
-class Acc {
+Future<Acc> getAcc() async { // 서버에서 마지막으로 측정된 가속도를 가져오는 함수
+  final response = await http.get(
+    Uri.parse('http://10.0.2.2:5000/acc_data'),
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8', // 안 넣으면 오류 발생
+    },
+  );
+  return Acc.fromJson(jsonDecode(response.body));
+}
+
+class Acc { // 서버와 통신할 데이터의 형태를 정의하는 클래스
   final double acc_x;
   final double acc_y;
 
@@ -92,7 +102,7 @@ class choose_d_or_p extends StatelessWidget{
               onPressed: (){
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context)=>aggressive())
+                  MaterialPageRoute(builder: (context)=>datas())
                 );
               },
             child: Icon(Icons.person),
@@ -107,7 +117,7 @@ class choose_d_or_p extends StatelessWidget{
 
 }
 
-class acc extends StatefulWidget {
+class acc extends StatefulWidget { // 속도가 정상적일 떄의 화면
 
   @override
   accState createState() => accState();
@@ -118,10 +128,10 @@ class accState extends State<acc>{
   @override
 
   Widget build(BuildContext context) {
-    accelerometerEvents.listen((AccelerometerEvent event) {
-        if (sqrt(event.x * event.x + event.y * event.y) > 10){
-          createAcc(event.x, event.y);
-          Navigator.push(
+    accelerometerEvents.listen((AccelerometerEvent event) { // 가속도를 측정하는 함수
+        if (sqrt(event.x * event.x + event.y * event.y) > 10){ // 가속도가 10을 넘을 경우 함수 실행
+          createAcc(event.x, event.y); // 서버에 가속도 전송
+          Navigator.push( // 빨간 경고 화면으로 전환하는 함수
               context,
               MaterialPageRoute(builder: (context)=>aggressive())
           );
@@ -133,7 +143,7 @@ class accState extends State<acc>{
   }
 }
 
-class aggressive extends StatelessWidget {
+class aggressive extends StatelessWidget { // 난폭운전 경고 화면
   @override
   Widget build(BuildContext context) {
     accelerometerEvents.listen((AccelerometerEvent e) {
@@ -148,6 +158,53 @@ class aggressive extends StatelessWidget {
 
     return Container(
       color: Colors.red,
+    );
+  }
+}
+
+class datas extends StatefulWidget{ // 서버에서 데이터를 받아와 보여주는 페이지
+
+  @override
+  dataState createState() => dataState();
+}
+
+class dataState extends State<datas>{
+
+
+  @override
+  Widget build(BuildContext context){
+
+
+    var a = getAcc().then((value){ // 서버에서 마지막으로 측정된 데이터를 받아와 저장
+    });
+    return Scaffold(
+      appBar: AppBar( // 페이지 제목
+        title: Text('최근의 가속도 기록'),
+      ),
+
+      body: Row( // 글자 위치 설정
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          FutureBuilder( // future 변수를 출력하게 도와주는 함수
+            future: getAcc(),
+            builder: ((context, snapshot) {
+             if (snapshot.connectionState == ConnectionState.done){
+               Acc a = snapshot.data as Acc;
+               return Text('acc_x : ${a.acc_x} ' + 'acc_y : ${a.acc_y}',
+               style: TextStyle(
+                 fontSize: 30,
+                 color: Colors.blue,
+                 fontWeight: FontWeight.bold
+               ));
+             }
+             else{
+               return Text('error');
+             }
+            }),
+          ),
+        ]
+      ),
     );
   }
 }
